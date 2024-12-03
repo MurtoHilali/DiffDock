@@ -3,6 +3,161 @@
 
 
 ![Alt Text](overview.png)
+---
+# Guide for QDX
+
+## Installation & setup
+
+*Running with CUDA 12.7*
+
+Below is manual installation. Alternatively, use the `setup.sh` file.
+
+1. Installation
+
+```
+git clone [https://github.com/gcorso/DiffDock.git](https://github.com/gcorso/DiffDock.git)
+cd DiffDock
+```
+
+2. Create conda env
+
+```
+conda env create --file environment.yml
+conda activate diffdock
+```
+
+3. Install torch explicitly
+
+```
+pip install --extra-index-url https://download.pytorch.org/whl/cu117 \
+				    --find-links https://pytorch-geometric.com/whl/torch-1.13.1+cu117.html \
+				    torch==1.13.1+cu117
+```
+
+4. Install the remaining dependencies
+
+```
+pip install -r requirements.txt
+```
+
+Process is a bit redundant but helps to avoid openfold errors.
+
+## Use cases
+
+### Inference
+
+Note: if initial commands don't work because of a module not found error, setting `PYTHONPATH=/path/to/DiffDock` usually fixes things.
+
+<details>
+<summary><b>Help documentation</b> </summary>
+
+    usage: inference.py [-h] [--config CONFIG] [--protein_ligand_csv PROTEIN_LIGAND_CSV] [--complex_name COMPLEX_NAME] [--protein_path PROTEIN_PATH] [--protein_sequence PROTEIN_SEQUENCE] [--ligand_description LIGAND_DESCRIPTION]
+                        [-l LOGLEVEL] [--out_dir OUT_DIR] [--save_visualisation] [--samples_per_complex SAMPLES_PER_COMPLEX] [--model_dir MODEL_DIR] [--ckpt CKPT] [--confidence_model_dir CONFIDENCE_MODEL_DIR]
+                        [--confidence_ckpt CONFIDENCE_CKPT] [--batch_size BATCH_SIZE] [--no_final_step_noise] [--inference_steps INFERENCE_STEPS] [--actual_steps ACTUAL_STEPS] [--old_score_model] [--old_confidence_model]
+                        [--initial_noise_std_proportion INITIAL_NOISE_STD_PROPORTION] [--choose_residue] [--temp_sampling_tr TEMP_SAMPLING_TR] [--temp_psi_tr TEMP_PSI_TR] [--temp_sigma_data_tr TEMP_SIGMA_DATA_TR]
+                        [--temp_sampling_rot TEMP_SAMPLING_ROT] [--temp_psi_rot TEMP_PSI_ROT] [--temp_sigma_data_rot TEMP_SIGMA_DATA_ROT] [--temp_sampling_tor TEMP_SAMPLING_TOR] [--temp_psi_tor TEMP_PSI_TOR]
+                        [--temp_sigma_data_tor TEMP_SIGMA_DATA_TOR] [--gnina_minimize] [--gnina_path GNINA_PATH] [--gnina_log_file GNINA_LOG_FILE] [--gnina_full_dock] [--gnina_autobox_add GNINA_AUTOBOX_ADD]
+                        [--gnina_poses_to_optimize GNINA_POSES_TO_OPTIMIZE]
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --config CONFIG
+      --protein_ligand_csv PROTEIN_LIGAND_CSV
+                            Path to a .csv file specifying the input as described in the README. If this is not None, it will be used instead of the --protein_path, --protein_sequence and --ligand parameters
+      --complex_name COMPLEX_NAME
+                            Name that the complex will be saved with
+      --protein_path PROTEIN_PATH
+                            Path to the protein file
+      --protein_sequence PROTEIN_SEQUENCE
+                            Sequence of the protein for ESMFold, this is ignored if --protein_path is not None
+      --ligand_description LIGAND_DESCRIPTION
+                            Either a SMILES string or the path to a molecule file that rdkit can read
+      -l LOGLEVEL, --log LOGLEVEL, --loglevel LOGLEVEL
+                            Log level. Default WARNING
+      --out_dir OUT_DIR     Directory where the outputs will be written to
+      --save_visualisation  Save a pdb file with all of the steps of the reverse diffusion
+      --samples_per_complex SAMPLES_PER_COMPLEX
+                            Number of samples to generate
+      --model_dir MODEL_DIR
+                            Path to folder with trained score model and hyperparameters
+      --ckpt CKPT           Checkpoint to use for the score model
+      --confidence_model_dir CONFIDENCE_MODEL_DIR
+                            Path to folder with trained confidence model and hyperparameters
+      --confidence_ckpt CONFIDENCE_CKPT
+                            Checkpoint to use for the confidence model
+      --batch_size BATCH_SIZE
+      --no_final_step_noise
+                            Use no noise in the final step of the reverse diffusion
+      --inference_steps INFERENCE_STEPS
+                            Number of denoising steps
+      --actual_steps ACTUAL_STEPS
+                            Number of denoising steps that are actually performed
+      --old_score_model
+      --old_confidence_model
+      --initial_noise_std_proportion INITIAL_NOISE_STD_PROPORTION
+                            Initial noise std proportion
+      --choose_residue
+      --temp_sampling_tr TEMP_SAMPLING_TR
+      --temp_psi_tr TEMP_PSI_TR
+      --temp_sigma_data_tr TEMP_SIGMA_DATA_TR
+      --temp_sampling_rot TEMP_SAMPLING_ROT
+      --temp_psi_rot TEMP_PSI_ROT
+      --temp_sigma_data_rot TEMP_SIGMA_DATA_ROT
+      --temp_sampling_tor TEMP_SAMPLING_TOR
+      --temp_psi_tor TEMP_PSI_TOR
+      --temp_sigma_data_tor TEMP_SIGMA_DATA_TOR
+      --gnina_minimize
+      --gnina_path GNINA_PATH
+      --gnina_log_file GNINA_LOG_FILE
+      --gnina_full_dock
+      --gnina_autobox_add GNINA_AUTOBOX_ADD
+      --gnina_poses_to_optimize GNINA_POSES_TO_OPTIMIZE
+    
+</details>
+    
+
+**Single protein-ligand inference**
+
+```
+python -m inference \
+	--config default_inference_args.yaml \
+	--complex_name 1a0q_single \
+	--protein_path data/1a0q/1a0q_protein_processed.pdb \
+	--ligand_description data/1a0q/1a0q_ligand.sdf \
+	--out_dir results/user_predictions_small/
+```
+
+**Batch protein-ligand inference**
+
+```bash
+python -m inference \
+	--config default_inference_args.yaml \  
+	--protein_ligand_csv data/protein_ligand_example.csv \
+	--out_dir results/user_predictions_small 
+```
+
+*protein_ligand_example.csv:*
+
+```
+complex_name,protein_path,ligand_description,protein_sequence
+1a0q,data/1a0q/1a0q_protein_processed.pdb,data/1a0q/1a0q_ligand.sdf,
+1a0q_custom,data/1a0q/1a0q_protein_processed.pdb,COc(cc1)ccc1C#N,
+```
+
+*Notes on arguments:*
+
+- **`protein_sequence`** can be left empty if PDB file is provided.
+    - DiffDock will use ESMFold to generate a computational structure for docking.
+- Enabling **`save_visualisation`** saves a PDB with all poses docked throughout the diffusion process.
+    - Good for visualisation (unsurprisingly) but will generate loads of data most won’t need. Does NOT alter inference runtime.
+
+Most arguments did not need to be altered. These are the few I did:
+
+- **`inference_steps`** & **`actual_steps`** (the latter will supersede the former).
+    - Strong results tend to come from 19-20 inference/actual steps, showing significant accuracy dropoff at any less — despite the paper’s claims.
+    - This is something I altered for experimental purposes, and will likely be something users are interested in modulating.
+- **`samples_per_complex`** is another flag worth modulating. Set to 10 by default, this will determine the number of docked ligand conformations are produced.
+---
 
 ### [Original paper on arXiv](https://arxiv.org/abs/2210.01776)
 

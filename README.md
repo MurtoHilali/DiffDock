@@ -1,16 +1,18 @@
-# DiffDock: Diffusion Steps, Twists, and Turns for Molecular Docking
-[![Open in HuggingFace](https://huggingface.co/datasets/huggingface/badges/raw/main/open-in-hf-spaces-sm.svg)](https://huggingface.co/spaces/reginabarzilaygroup/DiffDock-Web)
+# DiffDock: Guide for QDX
 
-
-![Alt Text](overview.png)
----
-# Guide for QDX
+**Table of contents**
+- [Installation & setup](#installation--setup)
+- [Use cases](#use-cases)
+    - Single protein-ligand inference
+    - Batch protein-ligand inference
+    - Notes on arguments
+- [Original README Docs](#original-readme-docs)
 
 ## Installation & setup
 
 *Running with CUDA 12.7*
 
-Below is manual installation. Alternatively, use the `setup.sh` file.
+Below are the steps for manual installation. Alternatively, use the `setup.sh` file.
 
 1. Installation
 
@@ -30,8 +32,8 @@ conda activate diffdock
 
 ```
 pip install --extra-index-url https://download.pytorch.org/whl/cu117 \
-				    --find-links https://pytorch-geometric.com/whl/torch-1.13.1+cu117.html \
-				    torch==1.13.1+cu117
+			--find-links https://pytorch-geometric.com/whl/torch-1.13.1+cu117.html \
+			torch==1.13.1+cu117
 ```
 
 4. Install the remaining dependencies
@@ -114,17 +116,17 @@ Note: if initial commands don't work because of a module not found error, settin
       --gnina_poses_to_optimize GNINA_POSES_TO_OPTIMIZE
     
 </details>
-    
+
 
 **Single protein-ligand inference**
 
 ```
 python -m inference \
 	--config default_inference_args.yaml \
-	--complex_name 1a0q_single \
+	--complex_name 1a0q_single \ # this can be set to anything
 	--protein_path data/1a0q/1a0q_protein_processed.pdb \
 	--ligand_description data/1a0q/1a0q_ligand.sdf \
-	--out_dir results/user_predictions_small/
+	--out_dir results/user_predictions_small/ # this can also be set to anything
 ```
 
 **Batch protein-ligand inference**
@@ -150,6 +152,7 @@ complex_name,protein_path,ligand_description,protein_sequence
     - DiffDock will use ESMFold to generate a computational structure for docking.
 - Enabling **`save_visualisation`** saves a PDB with all poses docked throughout the diffusion process.
     - Good for visualisation (unsurprisingly) but will generate loads of data most won’t need. Does NOT alter inference runtime.
+- DiffDock can accept both PDB/protein sequence as well SDF/MOL2/SMILES strings.
 
 Most arguments did not need to be altered. These are the few I did:
 
@@ -158,6 +161,14 @@ Most arguments did not need to be altered. These are the few I did:
     - This is something I altered for experimental purposes, and will likely be something users are interested in modulating.
 - **`samples_per_complex`** is another flag worth modulating. Set to 10 by default, this will determine the number of docked ligand conformations are produced.
 ---
+### Original README Docs
+<details>
+<summary><b>View</b> </summary>
+
+[![Open in HuggingFace](https://huggingface.co/datasets/huggingface/badges/raw/main/open-in-hf-spaces-sm.svg)](https://huggingface.co/spaces/reginabarzilaygroup/DiffDock-Web)
+
+
+![Alt Text](overview.png)
 
 ### [Original paper on arXiv](https://arxiv.org/abs/2210.01776)
 
@@ -397,3 +408,5 @@ We sincerely thank:
 * Jacob Silterra for his help with the publishing and deployment of the code.
 * Arthur Deng, Nicholas Polizzi and Ben Fry for their critical contributions to part of the code in this repository. 
 * Wei Lu and Rachel Wu for pointing out some issues with the code.
+
+</details>
